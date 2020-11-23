@@ -8,8 +8,37 @@
     tools:context=".activity.MainActivity">
 
 
+    <LinearLayout
+        android:id="@+id/top_layer"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:background="@color/black"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/back_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:text="뒤로가기"/>
+    </LinearLayout>
 
 
+    <View
+        android:id="@+id/main_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/top_layer"
+        android:layout_above="@+id/house_view"
+        android:background="#ffffff"/>
+
+    <View
+        android:id="@+id/bird_view"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:visibility="gone"
+        android:background="@drawable/baby_apeach"/>
     <LinearLayout
         android:id="@+id/house_view"
         android:layout_width="match_parent"
@@ -49,39 +78,6 @@
             android:background="@color/black"/>
 
     </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/top_layer"
-        android:layout_width="match_parent"
-        android:layout_height="80dp"
-        android:background="@color/black"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
-
-        <Button
-            android:id="@+id/back_btn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
-            android:text="뒤로가기"/>
-    </LinearLayout>
-
-
-    <View
-        android:id="@+id/main_view"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@id/top_layer"
-        android:layout_above="@+id/house_view"
-        android:background="#ffffff"/>
-
-    <View
-        android:id="@+id/bird_view"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:visibility="gone"
-        android:background="#00ff00"/>
-
 
 
 </RelativeLayout>

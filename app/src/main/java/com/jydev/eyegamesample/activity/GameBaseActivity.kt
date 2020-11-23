@@ -11,6 +11,7 @@ import com.jydev.eyegamesample.fragment.GameEndFragment
 import com.jydev.eyegamesample.fragment.GameInfoFragment
 import com.jydev.eyegamesample.fragment.play.PlayFragment01
 import com.jydev.eyegamesample.fragment.play.PlayFragment02
+import com.jydev.eyegamesample.fragment.play.PlayFragment03
 import com.jydev.eyegamesample.util.GameEnum
 import com.jydev.eyegamesample.util.GameMethod
 import com.jydev.eyegamesample.util.NumClass.whatPlay
@@ -46,7 +47,7 @@ open class GameBaseActivity() : AppCompatActivity(),
         return when (whatPlay) {
             PlayEnum.Game01.ordinal -> PlayFragment01()
             PlayEnum.Game02.ordinal -> PlayFragment02()
-            PlayEnum.Game03.ordinal -> PlayFragment01()
+            PlayEnum.Game03.ordinal -> PlayFragment03()
             else -> PlayFragment01()
         }
     }

@@ -202,10 +202,9 @@ class PlayFragment01 : Fragment() {
         if (isCorrect) {
             resultCt++
             vibrator.vibrate(200)
-        } else {
+        } else
             vibrator.vibrate(500)
-            Toast.makeText(mActivity, "틀림", Toast.LENGTH_SHORT).show()
-        }
+
         imageLayer.removeAllViews()
         flag = true
     }
