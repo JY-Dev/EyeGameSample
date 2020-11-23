@@ -16,7 +16,10 @@ import com.jydev.eyegamesample.R
 import com.jydev.eyegamesample.activity.GameBaseActivity
 import com.jydev.eyegamesample.util.GameDiffEnum
 import com.jydev.eyegamesample.util.dp
+import kotlinx.android.synthetic.main.fragment_play02.view.*
 import kotlinx.android.synthetic.main.fragment_play03.view.*
+import kotlinx.android.synthetic.main.fragment_play03.view.back_btn
+import kotlinx.android.synthetic.main.fragment_play03.view.main_view
 import java.util.*
 
 class PlayFragment03 : Fragment() {
@@ -60,6 +63,9 @@ class PlayFragment03 : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_play03, container, false)
+        view.back_btn.setOnClickListener {
+            mActivity.getGameViewModel().gotoInfo()
+        }
         timeTv = view.time_tv
         mainView = view.main_view
         startGame()
