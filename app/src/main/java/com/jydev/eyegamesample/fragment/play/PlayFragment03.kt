@@ -34,6 +34,7 @@ class PlayFragment03 : Fragment() {
     lateinit var vibrator: Vibrator
     private lateinit var timeTv : TextView
     private lateinit var mainView : LinearLayout
+    private var isFirst = true
     var time = Timer()
     var roundCT = 0
     var answerCT = 0
@@ -55,6 +56,7 @@ class PlayFragment03 : Fragment() {
                     period = 7
                 }
             }
+            startGame()
         })
     }
 
@@ -68,7 +70,6 @@ class PlayFragment03 : Fragment() {
         }
         timeTv = view.time_tv
         mainView = view.main_view
-        startGame()
         return view
     }
 
@@ -146,6 +147,7 @@ class PlayFragment03 : Fragment() {
     override fun onAttach(context: Context) {
         super.onAttach(context)
         mActivity = context as GameBaseActivity
+
         vibrator = context.getSystemService(AppCompatActivity.VIBRATOR_SERVICE) as Vibrator
     }
 }
