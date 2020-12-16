@@ -2,6 +2,7 @@ package com.jydev.eyegamesample.fragment.play
 
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Bundle
 import android.os.Handler
@@ -11,8 +12,8 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.ViewTreeObserver
 import android.widget.LinearLayout
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.animation.doOnEnd
 import androidx.lifecycle.Observer
@@ -23,7 +24,6 @@ import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
-import kotlinx.android.synthetic.main.fragment_play02.*
 import kotlinx.android.synthetic.main.fragment_play02.view.*
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
@@ -36,18 +36,19 @@ class PlayFragment02 : Fragment() {
     var MIN_X = 0
     var MIN_Y = 0
     val period = 1000L
+    val DELAY_TIME = 3000L
     lateinit var vibrator: Vibrator
     val rpCT = 8L
     lateinit var house : View
     lateinit var ani : AnimatorSet
     var houseData = mutableListOf<View>()
     var disposable = CompositeDisposable()
-    lateinit var birdView : View
+    lateinit var objectView : View
     lateinit var mainView : View
     lateinit var houseView : LinearLayout
     lateinit var mActivity : GameBaseActivity
     lateinit var topView : LinearLayout
-    private var catchCT = 0
+    private var findCT = 0
     private var tryCT = 0
     private var gameCT = 3
     private var houseHeight = 0
@@ -55,17 +56,7 @@ class PlayFragment02 : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         mActivity.getGameViewModel().difficulty.observe(this, Observer {
-            when (it) {
-                GameDiffEnum.EASY.ordinal -> {
-                    gameCT = 3
-                }
-                GameDiffEnum.NORMAL.ordinal -> {
-                    gameCT = 4
-                }
-                GameDiffEnum.HARD.ordinal -> {
-                    gameCT = 5
-                }
-            }
+                setDifficulty(it)
         })
     }
 
@@ -74,36 +65,90 @@ class PlayFragment02 : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_play02, container, false)
-        houseData.addAll(mutableListOf(view.house01,view.house02,view.house03,view.house04))
-        houseClickSet()
-        mainView = view.main_view
-        birdView = view.bird_view
-        houseView = view.house_view
-        topView = view.top_layer
-        maxSet()
-        Handler(Looper.getMainLooper()).postDelayed({
-            startGame()
-        },3000)
-        view.back_btn.setOnClickListener {
-            mActivity.getGameViewModel().gotoInfo()
-        }
+        init(view)
         return view
     }
 
+    /**
+     * Init
+     */
+    private fun init(view : View){
+        viewInit(view)
+        houseSet(view)
+        setMaxPosition()
+        gameInit()
+    }
+
+    /**
+     * Game Init
+     */
+    private fun gameInit(){
+        Toast.makeText(mActivity, "3초뒤에 게임이 시작됩니다.", Toast.LENGTH_SHORT).show()
+        Handler(Looper.getMainLooper()).postDelayed({
+            startGame()
+        },DELAY_TIME)
+    }
+
+
+    /**
+     * view = Fragment View
+     * 뷰 초기화
+     */
+    private fun viewInit(view : View){
+        mainView = view.main_view
+        objectView = view.object_view
+        houseView = view.house_view
+        topView = view.top_layer
+        // 뒤로가기 버튼 InfoFragment로 이동
+        view.back_btn.setOnClickListener {
+            mActivity.getGameViewModel().gotoInfo()
+        }
+    }
+
+    /**
+     * view = Fragment View
+     * House View Set (Object가 들어갈 Container)
+     */
+    private fun houseSet(view : View){
+        houseData.addAll(mutableListOf(view.house01,view.house02,view.house03,view.house04))
+        houseClickSet()
+    }
+
+    /**
+     * Game 난이도 설정
+     */
+    private fun setDifficulty(value : Int){
+        when (value) {
+            GameDiffEnum.EASY.ordinal -> {
+                gameCT = 3
+            }
+            GameDiffEnum.NORMAL.ordinal -> {
+                gameCT = 4
+            }
+            GameDiffEnum.HARD.ordinal -> {
+                gameCT = 5
+            }
+        }
+    }
 
     override fun onDestroy() {
         super.onDestroy()
         disposable.dispose()
     }
 
+    /**
+     * Game 시작
+     */
+    @SuppressLint("CheckResult")
     private fun startGame(){
+        //시도 카운트 증가
         tryCT++
-        val a= Observable.interval(period+100, TimeUnit.MILLISECONDS).map {
+        Observable.interval(period+100, TimeUnit.MILLISECONDS).map {
         }.take(rpCT).subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).doOnSubscribe {
             disposable.add(it)
-            birdInit()
+            objectInit()
         }.doOnComplete {
-            birdGotoHome()
+            objectGotoHome()
         }.subscribe {
             setAnimation(getRamdomX(),getRamdomY(),false)
         }
@@ -114,92 +159,118 @@ class PlayFragment02 : Fragment() {
         mActivity = context as GameBaseActivity
         vibrator = context.getSystemService(AppCompatActivity.VIBRATOR_SERVICE) as Vibrator
     }
-
-    private fun maxSet(){
+    /**
+     * 물체가 이동할 X,Y 최대 범위 SET
+     */
+    private fun setMaxPosition(){
         mainView.viewTreeObserver.addOnGlobalLayoutListener {
-            MAX_Y = mainView.height - birdView.height
-            MAX_X = mainView.width - birdView.width
+            MAX_Y = mainView.height - objectView.height
+            MAX_X = mainView.width - objectView.width
             MIN_Y = topView.height
             houseHeight = houseView.height
         }
     }
 
-    private fun birdGotoHome(){
+    /**
+     * Object를 Random Container로 이동
+     */
+    private fun objectGotoHome(){
         house = houseData[Random.nextInt(houseData.size)]
         setAnimation(house.x,MAX_Y+houseHeight.toFloat()*2,true)
-        birdView.isEnabled = false
+        objectView.isEnabled = false
         ani.doOnEnd {
-            birdView.visibility = View.GONE
+            objectView.visibility = View.GONE
             houseEnable()
         }
     }
 
+    /**
+     * Object가 Container로 들어가기 전까지 Container Click 못하기 위한 Enable set
+     */
     private fun houseEnable(){
         houseData.forEach {
             it.isEnabled = !it.isEnabled
         }
     }
 
+    /**
+     * 정답 여부 Check
+     */
     private fun houseClickSet(){
         houseEnable()
         houseData.forEach {
             it.setOnClickListener {view ->
                 if(view==house) {
                     vibrator.vibrate(200)
-                    catchBird()
+                    findObject()
                 }
                 else {
                     vibrator.vibrate(500)
-                    clearBird()
+                    clearObject()
                 }
                 houseEnable()
             }
         }
     }
 
-    private fun birdInit(){
-        birdView.x = getRamdomX()
-        birdView.y = getRamdomY()
-        birdView.visibility = View.GONE
+    /**
+     * Object Init
+     */
+    private fun objectInit(){
+        // Object 위치 설정 초기에는 Object 숨김
+        objectView.x = getRamdomX()
+        objectView.y = getRamdomY()
+        objectView.visibility = View.GONE
     }
 
+    /**
+     * Object Random 이동 Animcation
+     */
     private fun setAnimation(x: Float, y: Float,ishome:Boolean) {
         var trnX = x
         var trnY = y
         if(!ishome){
-            //println("checkTest="+(birdView.x-trnX)+"_"+(birdView.y-trnY))
-            while(abs(birdView.x-trnX)<weight&&abs(birdView.y-trnY)<weight){
+            while(abs(objectView.x-trnX)<weight&&abs(objectView.y-trnY)<weight){
                     trnX = getRamdomX()
                     trnY = getRamdomY()
             }
         }
-        val objectAnimator1 = ObjectAnimator.ofFloat(birdView, View.TRANSLATION_X, trnX)
-        val objectAnimator2 = ObjectAnimator.ofFloat(birdView, View.TRANSLATION_Y, trnY)
+        val objectAnimator1 = ObjectAnimator.ofFloat(objectView, View.TRANSLATION_X, trnX)
+        val objectAnimator2 = ObjectAnimator.ofFloat(objectView, View.TRANSLATION_Y, trnY)
         ani = AnimatorSet().apply {
             playTogether(objectAnimator1, objectAnimator2)
             duration = period
             start()
-            birdView.visibility = View.VISIBLE
-            birdView.isEnabled = true
+            objectView.visibility = View.VISIBLE
+            objectView.isEnabled = true
         }
     }
 
-    private fun getRamdomX() = Random.nextDouble(MIN_X.toDouble(), MAX_X.toDouble()).toFloat()
-    private fun getRamdomY() = Random.nextDouble(MIN_Y.toDouble(), MAX_Y.toDouble()).toFloat()
-
-    private fun catchBird(){
-        catchCT++
-        if(catchCT==gameCT) mActivity.getGameViewModel().gotoEnd("총횟수 : $tryCT 잡은횟수 : $catchCT")
-        else clearBird()
+    /**
+     * Object를 찾았을때
+     */
+    private fun findObject(){
+        findCT++
+        if(findCT==gameCT) mActivity.getGameViewModel().gotoEnd("총횟수 : $tryCT 잡은횟수 : $findCT")
+        else clearObject()
     }
 
-    private fun clearBird(){
+    /**
+     * Object 초기화
+     */
+    private fun clearObject(){
         disposable.dispose()
         disposable = CompositeDisposable()
         ani.cancel()
-        birdView.x = 0f
-        birdView.y = 0f
-        birdView.visibility = View.GONE
+        objectView.x = 0f
+        objectView.y = 0f
+        objectView.visibility = View.GONE
         startGame()
     }
+
+    /**
+     * Object가 이동할 위치 Postion XY 랜덤값 생성
+     */
+    private fun getRamdomX() = Random.nextDouble(MIN_X.toDouble(), MAX_X.toDouble()).toFloat()
+    private fun getRamdomY() = Random.nextDouble(MIN_Y.toDouble(), MAX_Y.toDouble()).toFloat()
 }

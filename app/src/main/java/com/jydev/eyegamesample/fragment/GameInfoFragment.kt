@@ -13,6 +13,10 @@ import kotlinx.android.synthetic.main.fragment_game_info.*
 import kotlinx.android.synthetic.main.fragment_game_info.view.*
 
 
+/**
+ * GameInfoFragment
+ * 게임 난이도 설정 및 게임시작하는 Fragment
+ */
 class GameInfoFragment : Fragment() {
     private lateinit var mActivity : GameActivity
 
@@ -23,10 +27,7 @@ class GameInfoFragment : Fragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val view = inflater.inflate(R.layout.fragment_game_info, container, false)
-        view.button_ex_5_next.setOnClickListener {
-            mActivity.clearPlayFragent()
-            mActivity.getGameViewModel().gotoGame(getDifficulty())
-        }
+        init(view)
         return view
     }
 
@@ -35,6 +36,20 @@ class GameInfoFragment : Fragment() {
         mActivity = context as GameActivity
     }
 
+    private fun init(view : View){
+        viewInit(view)
+    }
+
+    private fun viewInit(view : View){
+        view.button_ex_5_next.setOnClickListener {
+            mActivity.clearPlayFragent()
+            mActivity.getGameViewModel().gotoGame(getDifficulty())
+        }
+    }
+
+    /**
+     * 난이도 가져오기
+     */
     private fun getDifficulty():Int{
         return when(rg.checkedRadioButtonId){
             R.id.rd_easy -> GameDiffEnum.EASY.ordinal

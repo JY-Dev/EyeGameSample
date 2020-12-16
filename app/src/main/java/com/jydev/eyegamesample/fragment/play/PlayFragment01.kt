@@ -3,6 +3,7 @@ package com.jydev.eyegamesample.fragment.play
 import android.animation.Animator
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.res.TypedArray
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -27,38 +28,21 @@ import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.fragment_play01.view.*
 import kotlinx.android.synthetic.main.fragment_play01.view.back_btn
-import kotlinx.android.synthetic.main.fragment_play02.view.*
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
 
 class PlayFragment01 : Fragment() {
-    private val colorList = mutableListOf(
-        R.drawable.nation_flag_1,
-        R.drawable.nation_flag_2,
-        R.drawable.nation_flag_3,
-        R.drawable.nation_flag_4,
-        R.drawable.nation_flag_5,
-        R.drawable.nation_flag_6,
-        R.drawable.nation_flag_7,
-        R.drawable.nation_flag_8,
-        R.drawable.nation_flag_9,
-        R.drawable.nation_flag_10,
-        R.drawable.nation_flag_11,
-        R.drawable.nation_flag_12,
-        R.drawable.nation_flag_13,
-        R.drawable.nation_flag_14,
-        R.drawable.nation_flag_15,
-        R.drawable.nation_flag_16
-    )
+    private lateinit var colorList : TypedArray
     lateinit var vibrator: Vibrator
     private var gameNum = 20L
-    var period = 500L
-    var MAX_X = 0
-    var MAX_Y = 0
-    val imgHeight = 100.dp
-    val imgWidth = 100.dp
-    var resultCt = 0
+    private val GAME_DELAY = 3000L
+    private var period = 500L
+    private var MAX_X = 0
+    private var MAX_Y = 0
+    private val imgHeight = 100.dp
+    private val imgWidth = 100.dp
+    private var resultCt = 0
     lateinit var ani: ViewPropertyAnimator
     var disposable = CompositeDisposable()
     private lateinit var mActivity: GameBaseActivity
@@ -68,20 +52,7 @@ class PlayFragment01 : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         mActivity.getGameViewModel().difficulty.observe(this, Observer {
-            when (it) {
-                GameDiffEnum.EASY.ordinal -> {
-                    period = 1000L
-                    gameNum = 10
-                }
-                GameDiffEnum.NORMAL.ordinal -> {
-                    period = 500L
-                    gameNum = 20
-                }
-                GameDiffEnum.HARD.ordinal -> {
-                    period = 400L
-                    gameNum = 25
-                }
-            }
+            setDifficulty(it)
         })
     }
 
@@ -89,107 +60,108 @@ class PlayFragment01 : Fragment() {
         super.onAttach(context)
         mActivity = context as GameBaseActivity
         vibrator = context.getSystemService(AppCompatActivity.VIBRATOR_SERVICE) as Vibrator
+        colorList = context.resources.obtainTypedArray(R.array.flag_img_list)
     }
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
+            inflater: LayoutInflater, container: ViewGroup?,
+            savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_play01, container, false)
-        imageLayer = view.img_layer
-        imageLayer.isEnabled = false
-        view.img_layer.viewTreeObserver.addOnGlobalLayoutListener {
-            MAX_X = view.img_layer.width - imgWidth
-            MAX_Y = view.img_layer.height - imgHeight
-        }
-        view.back_btn.setOnClickListener {
-            mActivity.getGameViewModel().gotoInfo()
-        }
-        Toast.makeText(mActivity, "3초뒤에 게임이 시작됩니다.", Toast.LENGTH_SHORT).show()
-        Handler(Looper.getMainLooper()).postDelayed({
-            gameInit()
-            imageLayer.isEnabled = true
-        }, 3000)
-
-
-        view.img_layer.setOnClickListener {
-            resultCase(false)
-        }
+        init(view)
         return view
     }
 
-    @SuppressLint("CheckResult")
-    private fun gameInit() {
-        Observable.interval(period * 2 + 100, TimeUnit.MILLISECONDS)
-            .take(gameNum+1).subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread()).doOnSubscribe {
-                disposable.add(it)
-            }.doOnComplete {
-                mActivity.getGameViewModel().gotoEnd("맞춘 갯수:$resultCt / $gameNum")
-            }.subscribe {
-                setAnimation()
-            }
+    /**
+     * Init
+     */
+    private fun init(view : View){
+        viewInit(view)
+        setMaxPosition()
+        gameInit()
     }
 
-    private fun setAnimation() {
-        val layoutParams = LinearLayout.LayoutParams(imgWidth, imgHeight)
-        val flagImg = ImageView(mActivity)
-        flagImg.apply {
-            visibility = View.GONE
-            setLayoutParams(layoutParams)
-            alpha = 0f
-            setOnClickListener {
-                ani.cancel()
+    /**
+     * 난이도 설정
+     */
+    private fun setDifficulty(value : Int){
+        when (value) {
+            GameDiffEnum.EASY.ordinal -> {
+                period = 1000L
+                gameNum = 10
             }
-            animate().translationX(getRamdomX()).setDuration(0)
-                .setListener(object : Animator.AnimatorListener {
-                    override fun onAnimationRepeat(p0: Animator?) {}
-                    override fun onAnimationEnd(p0: Animator?) {
-                        animate().translationY(getRamdomY()).setDuration(0)
-                            .setListener(object : Animator.AnimatorListener {
-                                override fun onAnimationRepeat(p0: Animator?) {}
-                                override fun onAnimationEnd(p0: Animator?) {
-                                    visibility = View.VISIBLE
-                                    ani = animate().alpha(1f).setDuration(period)
-                                        .setListener(object : Animator.AnimatorListener {
-                                            override fun onAnimationRepeat(p0: Animator?) {}
-                                            override fun onAnimationEnd(p0: Animator?) {
-                                                ani = animate().alpha(0F).setDuration(period)
-                                                    .setListener(object :
-                                                        Animator.AnimatorListener {
-                                                        override fun onAnimationRepeat(p0: Animator?) {}
-                                                        override fun onAnimationEnd(p0: Animator?) {
-                                                            if (!flag) resultCase(false)
-                                                            flag = false
-                                                        }
-
-                                                        override fun onAnimationCancel(p0: Animator?) {
-                                                            resultCase(true)
-                                                        }
-
-                                                        override fun onAnimationStart(p0: Animator?) {}
-                                                    })
-                                            }
-
-                                            override fun onAnimationCancel(p0: Animator?) {
-                                                resultCase(true)
-                                            }
-
-                                            override fun onAnimationStart(p0: Animator?) {}
-                                        })
-                                }
-
-                                override fun onAnimationCancel(p0: Animator?) {}
-                                override fun onAnimationStart(p0: Animator?) {}
-                            })
-                    }
-
-                    override fun onAnimationCancel(p0: Animator?) {}
-                    override fun onAnimationStart(p0: Animator?) {}
-                })
-            setImageResource(colorList[Random.nextInt(0, colorList.size - 1)])
+            GameDiffEnum.NORMAL.ordinal -> {
+                period = 500L
+                gameNum = 20
+            }
+            GameDiffEnum.HARD.ordinal -> {
+                period = 400L
+                gameNum = 25
+            }
         }
-        imageLayer.addView(flagImg)
+    }
+
+    /**
+     * view = Fragment View
+     * 물체가 생성될 X,Y 최대 범위 SET
+     */
+    private fun setMaxPosition(){
+        imageLayer.viewTreeObserver.addOnGlobalLayoutListener {
+            MAX_X = imageLayer.width - imgWidth
+            MAX_Y = imageLayer.height - imgHeight
+        }
+    }
+
+    /**
+     * view = Fragment View
+     * 뷰 초기화
+     */
+    private fun viewInit(view : View){
+        // 뒤로가기 버튼 => Info Fragment로 이동
+        view.back_btn.setOnClickListener {
+            mActivity.getGameViewModel().gotoInfo()
+        }
+
+        // 생성된 이미지 ADD 해줄 부모 View
+        imageLayer = view.img_layer.apply {
+            isEnabled = false
+            setOnClickListener { resultCase(false) }
+        }
+    }
+
+    /**
+     * Game Init
+     */
+    private fun gameInit(){
+        Toast.makeText(mActivity, "3초뒤에 게임이 시작됩니다.", Toast.LENGTH_SHORT).show()
+        Handler(Looper.getMainLooper()).postDelayed({
+            gameStart()
+            imageLayer.isEnabled = true
+        }, GAME_DELAY)
+    }
+
+
+    /**
+     * Game 시작
+     */
+    @SuppressLint("CheckResult")
+    private fun gameStart() {
+        Observable.interval(period * 2 + 100, TimeUnit.MILLISECONDS)
+                .take(gameNum + 1).subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread()).doOnSubscribe {
+                    disposable.add(it)
+                }.doOnComplete {
+                    mActivity.getGameViewModel().gotoEnd("맞춘 갯수:$resultCt / $gameNum")
+                }.subscribe {
+                    gameRunning()
+                }
+    }
+
+    /**
+     * Game 진행
+     */
+    private fun gameRunning() {
+        imageLayer.addView(createFlagImage())
     }
 
     override fun onDestroy() {
@@ -197,18 +169,82 @@ class PlayFragment01 : Fragment() {
         disposable.dispose()
     }
 
+    /**
+     * 게임에서 보여줄 이미지 생성
+     */
+    private fun createFlagImage() : ImageView{
+        val layoutParams = LinearLayout.LayoutParams(imgWidth, imgHeight)
+        return ImageView(mActivity).apply {
+            visibility = View.GONE
+            setLayoutParams(layoutParams)
+            alpha = 0f
+            setOnClickListener {
+                ani.cancel()
+            }
+            // X 위치 Animation
+            animate().translationX(getRamdomX()).setDuration(0)
+                    .setListener(getAnimation(cancel = {}, end = {
+                        // Y 위치 Animation
+                        animate().translationY(getRamdomY()).setDuration(0)
+                                .setListener(getAnimation(cancel = {}, end = {
+                                    visibility = View.VISIBLE
+                                    // Fade In Animation
+                                    ani = animate().alpha(1f).setDuration(period)
+                                            .setListener(getAnimation(cancel = {
+                                                resultCase(true)
+                                            }, end = {
+                                                // Fade Out Animcation
+                                                ani = animate().alpha(0F).setDuration(period)
+                                                        .setListener(getAnimation(cancel = {
+                                                            resultCase(true)
+                                                        }, end = {
+                                                            if (!flag) resultCase(false)
+                                                            flag = false
+                                                        }))
+                                            }))
+                                }))
+                    }))
+            setImageDrawable(colorList.getDrawable(Random.nextInt(0, colorList.length() - 1)))
+        }
+    }
 
+    /**
+     * 애니메이션 리스너 생성
+     */
+    private fun getAnimation(cancel: () -> Unit, end: () -> Unit): Animator.AnimatorListener {
+        return object : Animator.AnimatorListener {
+            override fun onAnimationRepeat(p0: Animator?) {}
+            override fun onAnimationEnd(p0: Animator?) = end()
+            override fun onAnimationCancel(p0: Animator?) = cancel()
+            override fun onAnimationStart(p0: Animator?) {}
+        }
+    }
+
+
+    /**
+     * 정답 여부 Checking
+     */
     private fun resultCase(isCorrect: Boolean) {
         if (isCorrect) {
+            //정답일때 점수를 올려줌
             resultCt++
             vibrator.vibrate(200)
         } else
             vibrator.vibrate(500)
+        clearGameView()
+    }
 
+    /**
+     * GameView 초기화
+     */
+    private fun clearGameView(){
         imageLayer.removeAllViews()
         flag = true
     }
 
+    /**
+     * Object 생성될 위치 Postion XY 랜덤값 생성
+     */
     private fun getRamdomX() = Random.nextDouble(0.toDouble(), MAX_X.toDouble()).toFloat()
     private fun getRamdomY() = Random.nextDouble(0.toDouble(), MAX_Y.toDouble()).toFloat()
 }

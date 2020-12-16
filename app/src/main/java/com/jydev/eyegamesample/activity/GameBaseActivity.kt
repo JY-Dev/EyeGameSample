@@ -39,10 +39,16 @@ open class GameBaseActivity() : AppCompatActivity(),
         gameViewmodel.gotoInfo()
     }
 
+    /**
+     * Game Fragment 초기화
+     */
     fun clearPlayFragent(){
         fragmentList[GameEnum.GAME.ordinal] = getPlayFragment()
     }
 
+    /**
+     *  선택한 Game Fragment
+     */
     private fun getPlayFragment() : Fragment {
         return when (whatPlay) {
             PlayEnum.Game01.ordinal -> PlayFragment01()
@@ -52,11 +58,17 @@ open class GameBaseActivity() : AppCompatActivity(),
         }
     }
 
+    /**
+     * 화면 이동
+     */
     override fun changeFragment(index: Int) {
         fragmentTransaction = supportFragmentManager.beginTransaction()
         fragmentTransaction.replace(R.id.frameLayout,fragmentList[index]).commitAllowingStateLoss()
     }
 
+    /**
+     * ViewModel Init
+     */
     private fun viewModelInit(){
         gameViewmodel.index.observe(this, Observer {
             if(it != GameEnum.FINISH.ordinal)
@@ -65,6 +77,9 @@ open class GameBaseActivity() : AppCompatActivity(),
         })
     }
 
+    /**
+     * Get ViewModel
+     */
     override fun getGameViewModel(): GameViewmodel {
         return gameViewmodel
     }

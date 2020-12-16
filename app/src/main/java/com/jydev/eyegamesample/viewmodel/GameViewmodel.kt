@@ -17,20 +17,32 @@ class GameViewmodel : ViewModel() {
         i.postValue(index)
     }
 
+    /**
+     * InfoFragment 이동
+     */
     fun gotoInfo(){
         changeIndex(GameEnum.INFO.ordinal)
     }
 
+    /**
+     * GameFragment 이동
+     */
     fun gotoGame(difficulty : Int){
         changeIndex(GameEnum.GAME.ordinal)
         diff.postValue(difficulty)
     }
 
+    /**
+     * Game 결과화면으로 이동
+     */
     fun gotoEnd(result : String){
         changeIndex(GameEnum.END.ordinal)
         text.postValue(result)
     }
 
+    /**
+     * 종료
+     */
     fun gotoFinish(){
         changeIndex(GameEnum.FINISH.ordinal)
     }

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="flag_img_list">
+        <item>@drawable/nation_flag_1</item>
+        <item>@drawable/nation_flag_2</item>
+        <item>@drawable/nation_flag_3</item>
+        <item>@drawable/nation_flag_4</item>
+        <item>@drawable/nation_flag_5</item>
+        <item>@drawable/nation_flag_6</item>
+        <item>@drawable/nation_flag_7</item>
+        <item>@drawable/nation_flag_8</item>
+        <item>@drawable/nation_flag_9</item>
+        <item>@drawable/nation_flag_10</item>
+        <item>@drawable/nation_flag_11</item>
+        <item>@drawable/nation_flag_12</item>
+        <item>@drawable/nation_flag_13</item>
+        <item>@drawable/nation_flag_14</item>
+        <item>@drawable/nation_flag_15</item>
+        <item>@drawable/nation_flag_16</item>
+    </array>
+</resources>
